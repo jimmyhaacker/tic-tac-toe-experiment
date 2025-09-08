@@ -79,7 +79,8 @@ def make_move(request, game_id):
                 'current_turn': game.current_turn,
                 'status': game.status,
                 'status_display': game.get_status_display(),
-                'game_finished': game.status != 'IN_PROGRESS'
+                'game_finished': game.status != 'IN_PROGRESS',
+                'winning_pattern': game.get_winning_pattern()
             })
         else:
             return JsonResponse({

@@ -55,6 +55,11 @@
             cursor: not-allowed;
             background-color: #f9f9f9;
         }
+        .cell.winning-cell {
+            background-color: #90EE90 !important;
+            border-color: #32CD32 !important;
+            box-shadow: 0 0 10px rgba(50, 205, 50, 0.5);
+        }
         .actions {
             margin-top: 30px;
         }
@@ -163,6 +168,11 @@
                     // Update game info
                     updateGameInfo(data.current_turn, data.status_display, data.game_finished);
                     
+                    // Highlight winning pattern if game is won
+                    if (data.game_finished && data.winning_pattern) {
+                        highlightWinningPattern(data.winning_pattern);
+                    }
+                    
                     // Show game end message if finished
                     if (data.game_finished) {
                         setTimeout(() => {
@@ -222,6 +232,17 @@
                     cell.style.cursor = 'not-allowed';
                 });
             }
+        }
+        
+        function highlightWinningPattern(winningPattern) {
+            if (!winningPattern) return;
+            
+            winningPattern.forEach(position => {
+                const cell = document.querySelector(`[data-position="${position}"]`);
+                if (cell) {
+                    cell.classList.add('winning-cell');
+                }
+            });
         }
     </script>
 </body>

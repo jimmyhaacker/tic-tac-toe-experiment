@@ -251,6 +251,48 @@ class GameLogicTest(TestCase):
         # Will implement this after core functionality is working
         pass
 
+    def test_get_winning_pattern_row(self):
+        """Test getting winning pattern for row win"""
+        # X wins first row
+        self.game.make_move(0, 'X')  # X
+        self.game.make_move(3, 'O')  # O
+        self.game.make_move(1, 'X')  # X
+        self.game.make_move(4, 'O')  # O
+        self.game.make_move(2, 'X')  # X wins
+
+        winning_pattern = self.game.get_winning_pattern()
+        self.assertEqual(winning_pattern, [0, 1, 2])
+
+    def test_get_winning_pattern_column(self):
+        """Test getting winning pattern for column win"""
+        # X wins first column
+        self.game.make_move(0, 'X')  # X
+        self.game.make_move(1, 'O')  # O
+        self.game.make_move(3, 'X')  # X
+        self.game.make_move(2, 'O')  # O
+        self.game.make_move(6, 'X')  # X wins
+
+        winning_pattern = self.game.get_winning_pattern()
+        self.assertEqual(winning_pattern, [0, 3, 6])
+
+    def test_get_winning_pattern_diagonal(self):
+        """Test getting winning pattern for diagonal win"""
+        # X wins main diagonal
+        self.game.make_move(0, 'X')  # X
+        self.game.make_move(1, 'O')  # O
+        self.game.make_move(4, 'X')  # X
+        self.game.make_move(2, 'O')  # O
+        self.game.make_move(8, 'X')  # X wins
+
+        winning_pattern = self.game.get_winning_pattern()
+        self.assertEqual(winning_pattern, [0, 4, 8])
+
+    def test_get_winning_pattern_none_for_in_progress(self):
+        """Test that no winning pattern is returned for in-progress game"""
+        self.game.make_move(0, 'X')
+        winning_pattern = self.game.get_winning_pattern()
+        self.assertIsNone(winning_pattern)
+
     def test_move_after_game_finished(self):
         """Test that moves are rejected after game ends"""
         # Win the game first
@@ -315,3 +357,25 @@ class MakeMoveViewTest(TestCase):
         data = response.json()
         self.assertFalse(data['success'])
         self.assertEqual(data['message'], 'Invalid request data')
+
+    def test_winning_move_includes_pattern(self):
+        """Test that a winning move includes the winning pattern in response"""
+        # Set up a near-win situation for X
+        self.game.make_move(0, 'X')  # X at position 0
+        self.game.make_move(3, 'O')  # O at position 3
+        self.game.make_move(1, 'X')  # X at position 1
+        self.game.make_move(4, 'O')  # O at position 4
+
+        # Make the winning move
+        response = self.client.post(
+            self.url,
+            data=json.dumps({'position': 2, 'player': 'X'}),  # Complete row
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertTrue(data['game_finished'])
+        self.assertEqual(data['status'], 'X_WON')
+        self.assertEqual(data['winning_pattern'], [0, 1, 2])
