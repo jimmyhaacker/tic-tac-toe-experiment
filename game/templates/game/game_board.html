@@ -118,13 +118,15 @@
 
     <script>
         function makeMove(position) {
-            // Get game data from Django template
+            // Get current game data from the page (dynamically)
             const gameId = {{ game.id }};
-            const currentTurn = '{{ game.current_turn }}';
-            const gameStatus = '{{ game.status }}';
+            const currentTurnElement = document.querySelector('.game-info p:first-child strong');
+            const currentTurn = currentTurnElement.textContent.trim();
+            const statusElement = document.querySelector('.game-info p:last-child strong');
+            const gameStatus = statusElement.textContent.trim();
             
             // Check if game is finished
-            if (gameStatus !== 'IN_PROGRESS') {
+            if (gameStatus !== 'In Progress') {
                 alert('Game is finished!');
                 return;
             }
