@@ -161,9 +161,10 @@ class GameBoardViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Alice (X) vs Bob (O)')
         self.assertContains(response, 'Current Turn:')
-        self.assertContains(response, '<strong>X</strong>')
+        self.assertContains(response, '<strong id="current-turn">X</strong>')
         self.assertContains(response, 'Status:')
-        self.assertContains(response, '<strong>In Progress</strong>')
+        self.assertContains(response,
+                            '<strong id="game-status">In Progress</strong>')
         self.assertContains(response, 'Play Again')
 
     def test_game_board_nonexistent_game_404(self):
