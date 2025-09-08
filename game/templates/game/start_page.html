@@ -102,6 +102,35 @@
             background-color: #007bb5;
         }
         
+        /* Style links to look like buttons */
+        a.secondary-button {
+            display: inline-block;
+            background-color: #008CBA;
+            color: white;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            min-height: 44px;
+            text-decoration: none;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        
+        a.secondary-button:hover {
+            background-color: #007bb5;
+            transform: translateY(-1px);
+        }
+        
+        a.secondary-button:focus {
+            outline: 3px solid rgba(0, 140, 186, 0.3);
+            outline-offset: 2px;
+        }
+        
         /* Mobile optimizations */
         @media (max-width: 480px) {
             body {
@@ -207,6 +236,14 @@
                 <div id="ai-help" class="sr-only">Single player mode against AI (not yet available)</div>
             </div>
         </form>
+        
+        <div class="button-group" role="group" aria-label="Additional Options">
+            <a href="{% url 'game:scoreboard' %}" 
+               class="secondary-button" 
+               role="button"
+               aria-describedby="scoreboard-help">🏆 View Scoreboard</a>
+            <div id="scoreboard-help" class="sr-only">View player statistics and rankings</div>
+        </div>
     </main>
     
     <!-- Screen reader only styles -->

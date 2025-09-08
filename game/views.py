@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
-from .models import Game
+from .models import Game, Score
 
 
 def start_page(request):
@@ -98,3 +98,17 @@ def make_move(request, game_id):
             'success': False,
             'message': 'An error occurred'
         })
+
+
+def scoreboard(request):
+    """Display the scoreboard with player statistics"""
+    scores = Score.objects.all()
+    
+    # Sort by wins descending, then by win percentage
+    sorted_scores = sorted(scores, key=lambda x: (x.wins, x.win_percentage), reverse=True)
+    
+    context = {
+        'scores': sorted_scores,
+    }
+    
+    return render(request, 'game/scoreboard.html', context)

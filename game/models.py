@@ -1,6 +1,31 @@
 from django.db import models
 
 
+class Score(models.Model):
+    player_name = models.CharField(max_length=30, unique=True)
+    wins = models.IntegerField(default=0)
+    losses = models.IntegerField(default=0)
+    draws = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.player_name}: {self.wins}W-{self.losses}L-{self.draws}D"
+
+    @property
+    def total_games(self):
+        return self.wins + self.losses + self.draws
+
+    @property
+    def win_percentage(self):
+        if self.total_games == 0:
+            return 0
+        return round((self.wins / self.total_games) * 100, 1)
+
+    class Meta:
+        ordering = ['-wins', 'player_name']
+
+
 class Game(models.Model):
     PLAYER_CHOICES = (
         ('X', 'Player X'),
@@ -66,6 +91,11 @@ class Game(models.Model):
             self.current_turn = 'O' if player == 'X' else 'X'
 
         self.save()
+        
+        # Update scores if game finished
+        if self.status != 'IN_PROGRESS':
+            self.update_scores()
+            
         return True, "Move successful"
 
     def _check_winner(self):
@@ -108,6 +138,34 @@ class Game(models.Model):
     def _check_draw(self):
         """Check if the game is a draw (board full with no winner)"""
         return ' ' not in self.board_state
+
+    def update_scores(self):
+        """Update player scores when game finishes"""
+        if self.status == 'IN_PROGRESS':
+            return  # Game not finished yet
+
+        # Get or create score records for both players
+        x_score, _ = Score.objects.get_or_create(
+            player_name=self.player_x_name
+        )
+        o_score, _ = Score.objects.get_or_create(
+            player_name=self.player_o_name
+        )
+
+        # Update scores based on game result
+        if self.status == 'X_WON':
+            x_score.wins += 1
+            o_score.losses += 1
+        elif self.status == 'O_WON':
+            o_score.wins += 1
+            x_score.losses += 1
+        elif self.status == 'DRAW':
+            x_score.draws += 1
+            o_score.draws += 1
+
+        # Save the updated scores
+        x_score.save()
+        o_score.save()
 
 
 class Move(models.Model):

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoreboard - Tic-Tac-Toe Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        
+        .scoreboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .scoreboard-table th,
+        .scoreboard-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .scoreboard-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .scoreboard-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .scoreboard-table tr:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .rank {
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .player-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .wins {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .losses {
+            color: #dc3545;
+        }
+        
+        .draws {
+            color: #ffc107;
+        }
+        
+        .win-percentage {
+            font-weight: 600;
+            color: #007bff;
+        }
+        
+        .navigation {
+            margin: 30px 0;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .nav-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        .nav-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .nav-button.secondary {
+            background-color: #6c757d;
+        }
+        
+        .nav-button.secondary:hover {
+            background-color: #545b62;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            margin: 40px 0;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            body {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+            
+            .scoreboard-table {
+                font-size: 14px;
+            }
+            
+            .scoreboard-table th,
+            .scoreboard-table td {
+                padding: 8px 6px;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .nav-button {
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="container" role="main">
+        <h1>🏆 SCOREBOARD</h1>
+        
+        {% if scores %}
+            <table class="scoreboard-table" role="table" aria-label="Player scoreboard">
+                <thead>
+                    <tr>
+                        <th scope="col">Rank</th>
+                        <th scope="col">Player Name</th>
+                        <th scope="col">Wins</th>
+                        <th scope="col">Losses</th>
+                        <th scope="col">Draws</th>
+                        <th scope="col">Total Games</th>
+                        <th scope="col">Win %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for score in scores %}
+                        <tr>
+                            <td class="rank">{{ forloop.counter }}</td>
+                            <td class="player-name">{{ score.player_name }}</td>
+                            <td class="wins">{{ score.wins }}</td>
+                            <td class="losses">{{ score.losses }}</td>
+                            <td class="draws">{{ score.draws }}</td>
+                            <td>{{ score.total_games }}</td>
+                            <td class="win-percentage">{{ score.win_percentage }}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <p>No games have been played yet!</p>
+                <p>Start playing to see player statistics here.</p>
+            </div>
+        {% endif %}
+        
+        <nav class="navigation" role="navigation" aria-label="Main navigation">
+            <a href="{% url 'game:start_page' %}" class="nav-button">
+                🎮 New Game
+            </a>
+            <a href="{% url 'game:start_page' %}" class="nav-button secondary">
+                🏠 Home
+            </a>
+        </nav>
+    </main>
+</body>
+</html>
