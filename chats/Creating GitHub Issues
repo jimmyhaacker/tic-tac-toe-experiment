@@ -1,0 +1,78 @@
+can you create real Github issues from the PBIs in this file?
+9 references
+Copilot said: All PBIs from your backlog have been
+All PBIs from your backlog have been drafted as GitHub issues in your repository. Please review the drafts before publishing or making any edits. Here are the first two as an example (the rest follow the same format):
+
+Set Up Django Project and App
+Define Data Models
+Game Board UI – Start Page
+Game Board UI – Play Game
+Game Logic and Validation
+Game State & Messaging
+Responsive and Accessible UI
+Optional – Player Names and Score Tracking
+Optional – Single Player Against AI
+The following action was initiated: Saved the issue to [jimmyhaacker/tic-tac-toe-experiment#3](https://github.com/jimmyhaacker/tic-tac-toe-experiment/issues/3)
+Issue saved to jimmyhaacker/tic-tac-toe-experiment#3
+
+Copilot said: ````yaml type="issue-tree" data: - tag: 'jimmyhaacker/tic-tac-toe-experiment#3' title: 'Set
+Set Up Django Project and App
+jimmyhaacker/tic-tac-toe-experiment#3
+The following action was initiated: Saved the issue to [jimmyhaacker/tic-tac-toe-experiment#4](https://github.com/jimmyhaacker/tic-tac-toe-experiment/issues/4)
+Issue saved to jimmyhaacker/tic-tac-toe-experiment#4
+
+Copilot said: ````yaml type="issue-tree" data: - tag: 'jimmyhaacker/tic-tac-toe-experiment#4' title: 'Define
+Define Data Models
+jimmyhaacker/tic-tac-toe-experiment#4
+The following action was initiated: Saved the issue to [jimmyhaacker/tic-tac-toe-experiment#7](https://github.com/jimmyhaacker/tic-tac-toe-experiment/issues/7)
+Issue saved to jimmyhaacker/tic-tac-toe-experiment#7
+
+Copilot said: ````yaml type="issue-tree" data: - tag: 'jimmyhaacker/tic-tac-toe-experiment#7' title: 'Game
+Game Logic and Validation
+jimmyhaacker/tic-tac-toe-experiment#7
+The following action was initiated: Saved the issue to [jimmyhaacker/tic-tac-toe-experiment#9](https://github.com/jimmyhaacker/tic-tac-toe-experiment/issues/9)
+Issue saved to jimmyhaacker/tic-tac-toe-experiment#9
+
+Copilot said: ````yaml type="issue-tree" data: - tag: 'jimmyhaacker/tic-tac-toe-experiment#9' title: 'Responsive
+Responsive and Accessible UI
+jimmyhaacker/tic-tac-toe-experiment#9
+The following action was initiated: Saved the issue to [jimmyhaacker/tic-tac-toe-experiment#11](https://github.com/jimmyhaacker/tic-tac-toe-experiment/issues/11)
+Issue saved to jimmyhaacker/tic-tac-toe-experiment#11
+
+Copilot said: ````yaml type="issue-tree" data: - tag: 'jimmyhaacker/tic-tac-toe-experiment#11' title: 'Optional
+Optional – Single Player Against AI
+jimmyhaacker/tic-tac-toe-experiment#11
+You said: list the github issues
+list the github issues
+Copilot said: ```list type="issue" data: - url: "https://github.com/jimmyhaacker/tic-tac-toe-experiment/issues/11" state: "open"
+Optional – Single Player Against AI#11
+enhancement
+jimmyhaacker
+Optional – Player Names and Score Tracking#10
+enhancement
+jimmyhaacker
+Responsive and Accessible UI#9
+enhancement
+jimmyhaacker
+Game State & Messaging#8
+enhancement
+jimmyhaacker
+Game Logic and Validation#7
+enhancement
+jimmyhaacker
+Game Board UI – Play Game#6
+enhancement
+jimmyhaacker
+Game Board UI – Start Page#5
+enhancement
+jimmyhaacker
+Define Data Models#4
+enhancement
+jimmyhaacker
+Set Up Django Project and App#3
+enhancement
+jimmyhaacker
+You said: what's the name of the current repo?
+what's the name of the current repo?
+Copilot said: The name of the current repository is
+The name of the current repository is jimmyhaacker/tic-tac-toe-experiment.
