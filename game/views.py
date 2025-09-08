@@ -94,8 +94,8 @@ def make_move(request, game_id):
 
         if success:
             # Trigger AI move if it's an AI game and game is still in progress
-            ai_move_success = False
-            ai_message = ""
+            ai_move_success = None
+            ai_message = None
             if (game.is_ai_game and game.status == 'IN_PROGRESS' and 
                 game.current_turn == 'O'):
                 ai_move_success, ai_message = game.make_ai_move()
