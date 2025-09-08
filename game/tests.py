@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 import json
-from .models import Game, Move
+from .models import Game, Move, Score
 
 
 class GameModelTest(TestCase):
@@ -380,3 +380,197 @@ class MakeMoveViewTest(TestCase):
         self.assertTrue(data['game_finished'])
         self.assertEqual(data['status'], 'X_WON')
         self.assertEqual(data['winning_pattern'], [0, 1, 2])
+
+
+class ScoreModelTest(TestCase):
+    def test_score_creation(self):
+        """Test that a Score can be created with default values"""
+        score = Score.objects.create(player_name="TestPlayer")
+        self.assertEqual(score.player_name, "TestPlayer")
+        self.assertEqual(score.wins, 0)
+        self.assertEqual(score.losses, 0)
+        self.assertEqual(score.draws, 0)
+        self.assertEqual(score.total_games, 0)
+        self.assertEqual(score.win_percentage, 0)
+
+    def test_score_properties(self):
+        """Test score calculated properties"""
+        score = Score.objects.create(
+            player_name="TestPlayer",
+            wins=5,
+            losses=3,
+            draws=2
+        )
+        self.assertEqual(score.total_games, 10)
+        self.assertEqual(score.win_percentage, 50.0)
+
+    def test_score_win_percentage_no_games(self):
+        """Test win percentage calculation with no games"""
+        score = Score.objects.create(player_name="TestPlayer")
+        self.assertEqual(score.win_percentage, 0)
+
+    def test_score_string_representation(self):
+        """Test Score model string representation"""
+        score = Score.objects.create(
+            player_name="TestPlayer",
+            wins=2,
+            losses=1,
+            draws=1
+        )
+        expected = "TestPlayer: 2W-1L-1D"
+        self.assertEqual(str(score), expected)
+
+
+class ScoreTrackingTest(TestCase):
+    def setUp(self):
+        self.game = Game.objects.create(
+            player_x_name="Alice",
+            player_o_name="Bob"
+        )
+
+    def test_scores_updated_on_x_win(self):
+        """Test that scores are updated when X wins"""
+        # Set up a winning scenario for X (top row)
+        self.game.board_state = "XX O     "
+        self.game.current_turn = 'X'
+        self.game.save()  # Save the updated state
+        
+        success, message = self.game.make_move(2, 'X')  # X wins with top row
+        self.assertTrue(success, f"Move should succeed: {message}")
+        self.assertEqual(self.game.status, 'X_WON')
+
+        # Check that scores were created and updated
+        alice_score = Score.objects.get(player_name="Alice")
+        bob_score = Score.objects.get(player_name="Bob")
+
+        self.assertEqual(alice_score.wins, 1)
+        self.assertEqual(alice_score.losses, 0)
+        self.assertEqual(alice_score.draws, 0)
+
+        self.assertEqual(bob_score.wins, 0)
+        self.assertEqual(bob_score.losses, 1)
+        self.assertEqual(bob_score.draws, 0)
+
+    def test_scores_updated_on_o_win(self):
+        """Test that scores are updated when O wins"""
+        # Set up a winning scenario for O (left column: 0, 3, 6)
+        # O already at 0 and 3, needs to place at 6 to win
+        self.game.board_state = "OX O X   "
+        self.game.current_turn = 'O'
+        self.game.save()  # Save the updated state
+        
+        success, message = self.game.make_move(6, 'O')  # O wins with left column (0,3,6)
+        self.assertTrue(success, f"Move should succeed: {message}")
+        self.assertEqual(self.game.status, 'O_WON')
+
+        # Check that scores were created and updated
+        alice_score = Score.objects.get(player_name="Alice")
+        bob_score = Score.objects.get(player_name="Bob")
+
+        self.assertEqual(alice_score.wins, 0)
+        self.assertEqual(alice_score.losses, 1)
+        self.assertEqual(alice_score.draws, 0)
+
+        self.assertEqual(bob_score.wins, 1)
+        self.assertEqual(bob_score.losses, 0)
+        self.assertEqual(bob_score.draws, 0)
+
+    def test_scores_updated_on_draw(self):
+        """Test that scores are updated on a draw"""
+        # Set up a draw scenario - board almost full, no winner possible
+        self.game.board_state = "XOXOXXO O"
+        self.game.current_turn = 'X'
+        self.game.save()  # Save the updated state
+        
+        success, message = self.game.make_move(7, 'X')  # Game ends in draw
+        self.assertTrue(success, f"Move should succeed: {message}")
+        self.assertEqual(self.game.status, 'DRAW')
+
+        # Check that scores were created and updated
+        alice_score = Score.objects.get(player_name="Alice")
+        bob_score = Score.objects.get(player_name="Bob")
+
+        self.assertEqual(alice_score.wins, 0)
+        self.assertEqual(alice_score.losses, 0)
+        self.assertEqual(alice_score.draws, 1)
+
+        self.assertEqual(bob_score.wins, 0)
+        self.assertEqual(bob_score.losses, 0)
+        self.assertEqual(bob_score.draws, 1)
+
+    def test_existing_scores_updated(self):
+        """Test that existing scores are updated correctly"""
+        # Create existing scores
+        alice_score = Score.objects.create(
+            player_name="Alice",
+            wins=2,
+            losses=1,
+            draws=1
+        )
+        bob_score = Score.objects.create(
+            player_name="Bob",
+            wins=1,
+            losses=2,
+            draws=1
+        )
+
+        # Set up a winning scenario for Alice (top row)
+        self.game.board_state = "XX O     "
+        self.game.current_turn = 'X'
+        self.game.save()  # Save the updated state
+        
+        success, message = self.game.make_move(2, 'X')  # Alice (X) wins
+        self.assertTrue(success, f"Move should succeed: {message}")
+        self.assertEqual(self.game.status, 'X_WON')
+
+        # Refresh from database
+        alice_score.refresh_from_db()
+        bob_score.refresh_from_db()
+
+        # Check that scores were updated correctly
+        self.assertEqual(alice_score.wins, 3)
+        self.assertEqual(alice_score.losses, 1)
+        self.assertEqual(alice_score.draws, 1)
+
+        self.assertEqual(bob_score.wins, 1)
+        self.assertEqual(bob_score.losses, 3)
+        self.assertEqual(bob_score.draws, 1)
+
+
+class ScoreboardViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        # Create some test scores
+        Score.objects.create(player_name="Alice", wins=5, losses=2, draws=1)
+        Score.objects.create(player_name="Bob", wins=3, losses=3, draws=2)
+        Score.objects.create(player_name="Charlie", wins=7, losses=1, draws=0)
+
+    def test_scoreboard_loads(self):
+        """Test that the scoreboard loads correctly"""
+        response = self.client.get(reverse('game:scoreboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "SCOREBOARD")
+        self.assertContains(response, "Alice")
+        self.assertContains(response, "Bob")
+        self.assertContains(response, "Charlie")
+
+    def test_scoreboard_empty_state(self):
+        """Test scoreboard with no scores"""
+        Score.objects.all().delete()
+        response = self.client.get(reverse('game:scoreboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No games have been played yet!")
+
+    def test_scoreboard_ordering(self):
+        """Test that scoreboard is ordered by wins"""
+        response = self.client.get(reverse('game:scoreboard'))
+        self.assertEqual(response.status_code, 200)
+        
+        # Check that scores are passed to template
+        scores = response.context['scores']
+        self.assertEqual(len(scores), 3)
+        
+        # Should be ordered by wins descending (Charlie: 7, Alice: 5, Bob: 3)
+        self.assertEqual(scores[0].player_name, "Charlie")
+        self.assertEqual(scores[1].player_name, "Alice")
+        self.assertEqual(scores[2].player_name, "Bob")
