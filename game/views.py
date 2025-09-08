@@ -1,4 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
 from .models import Game
 
 
@@ -44,3 +48,52 @@ def game_board(request, game_id):
     }
 
     return render(request, 'game/game_board.html', context)
+
+
+@csrf_exempt
+@require_POST
+def make_move(request, game_id):
+    """Handle making a move in the game via AJAX"""
+    try:
+        game = get_object_or_404(Game, id=game_id)
+        data = json.loads(request.body)
+        position = int(data.get('position'))
+        player = data.get('player')
+
+        # Validate player matches current turn
+        if player != game.current_turn:
+            return JsonResponse({
+                'success': False,
+                'message': f"It's {game.current_turn}'s turn"
+            })
+
+        # Make the move
+        success, message = game.make_move(position, player)
+
+        if success:
+            # Return updated game state
+            return JsonResponse({
+                'success': True,
+                'message': message,
+                'board_state': list(game.board_state),
+                'current_turn': game.current_turn,
+                'status': game.status,
+                'status_display': game.get_status_display(),
+                'game_finished': game.status != 'IN_PROGRESS'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': message
+            })
+
+    except (json.JSONDecodeError, ValueError, KeyError):
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid request data'
+        })
+    except Exception:
+        return JsonResponse({
+            'success': False,
+            'message': 'An error occurred'
+        })
