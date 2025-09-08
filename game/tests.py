@@ -1,4 +1,5 @@
-from django.test import TestCase
+from django.test import TestCase, Client
+from django.urls import reverse
 from .models import Game, Move
 
 
@@ -69,3 +70,104 @@ class MoveModelTest(TestCase):
         self.assertEqual(game_moves.count(), 2)
         self.assertIn(move1, game_moves)
         self.assertIn(move2, game_moves)
+
+
+class StartPageViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_start_page_loads(self):
+        """Test that the start page loads correctly"""
+        response = self.client.get(reverse('game:start_page'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'TIC-TAC-TOE')
+        self.assertContains(response, 'New Game')
+        self.assertContains(response, 'Player X Name:')
+        self.assertContains(response, 'Player O Name:')
+
+    def test_new_game_creation_default_names(self):
+        """Test creating a new game with default player names"""
+        response = self.client.post(reverse('game:new_game'), {
+            'player_x_name': 'Player X',
+            'player_o_name': 'Player O'
+        })
+
+        # Should redirect to game board
+        self.assertEqual(response.status_code, 302)
+
+        # Check that a game was created
+        game = Game.objects.first()
+        self.assertIsNotNone(game)
+        self.assertEqual(game.player_x_name, 'Player X')
+        self.assertEqual(game.player_o_name, 'Player O')
+
+        # Check redirect URL
+        expected_url = reverse('game:game_board',
+                               kwargs={'game_id': game.id})
+        self.assertRedirects(response, expected_url)
+
+    def test_new_game_creation_custom_names(self):
+        """Test creating a new game with custom player names"""
+        response = self.client.post(reverse('game:new_game'), {
+            'player_x_name': 'Alice',
+            'player_o_name': 'Bob'
+        })
+
+        # Should redirect to game board
+        self.assertEqual(response.status_code, 302)
+
+        # Check that a game was created with custom names
+        game = Game.objects.first()
+        self.assertIsNotNone(game)
+        self.assertEqual(game.player_x_name, 'Alice')
+        self.assertEqual(game.player_o_name, 'Bob')
+
+    def test_new_game_creation_empty_names(self):
+        """Test creating new game with empty names defaults to defaults"""
+        response = self.client.post(reverse('game:new_game'), {
+            'player_x_name': '',
+            'player_o_name': ''
+        })
+
+        # Should redirect to game board
+        self.assertEqual(response.status_code, 302)
+
+        # Check that a game was created with default names
+        game = Game.objects.first()
+        self.assertIsNotNone(game)
+        self.assertEqual(game.player_x_name, 'Player X')
+        self.assertEqual(game.player_o_name, 'Player O')
+
+    def test_new_game_get_redirects_to_start(self):
+        """Test that GET request to new_game redirects to start page"""
+        response = self.client.get(reverse('game:new_game'))
+        self.assertRedirects(response, reverse('game:start_page'))
+
+
+class GameBoardViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.game = Game.objects.create(
+            player_x_name="Alice",
+            player_o_name="Bob"
+        )
+
+    def test_game_board_loads(self):
+        """Test that the game board loads correctly"""
+        game_board_url = reverse('game:game_board',
+                                 kwargs={'game_id': self.game.id})
+        response = self.client.get(game_board_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Alice (X) vs Bob (O)')
+        self.assertContains(response, 'Current Turn:')
+        self.assertContains(response, '<strong>X</strong>')
+        self.assertContains(response, 'Status:')
+        self.assertContains(response, '<strong>In Progress</strong>')
+        self.assertContains(response, 'Play Again')
+
+    def test_game_board_nonexistent_game_404(self):
+        """Test that accessing a nonexistent game returns 404"""
+        game_board_url = reverse('game:game_board',
+                                 kwargs={'game_id': 9999})
+        response = self.client.get(game_board_url)
+        self.assertEqual(response.status_code, 404)

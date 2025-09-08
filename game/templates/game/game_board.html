@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Game - {{ game.player_x_name }} vs {{ game.player_o_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .game-info {
+            margin-bottom: 30px;
+            font-size: 18px;
+            color: #555;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            max-width: 300px;
+            margin: 20px auto;
+        }
+        .cell {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: white;
+            transition: background-color 0.3s;
+        }
+        .cell:hover {
+            background-color: #f0f0f0;
+        }
+        .cell.disabled {
+            cursor: not-allowed;
+            background-color: #f9f9f9;
+        }
+        .actions {
+            margin-top: 30px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        button:hover, a:hover {
+            background-color: #45a049;
+        }
+        a {
+            background-color: #008CBA;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        a:hover {
+            background-color: #007bb5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ game.player_x_name }} (X) vs {{ game.player_o_name }} (O)</h1>
+        
+        <div class="game-info">
+            <p>Current Turn: <strong>{{ game.current_turn }}</strong></p>
+            <p>Status: <strong>{{ game.get_status_display }}</strong></p>
+        </div>
+        
+        <div class="board">
+            {% for cell in board_cells %}
+                <div class="cell {% if cell != ' ' %}disabled{% endif %}" data-position="{{ forloop.counter0 }}">
+                    {{ cell|default_if_none:'' }}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="actions">
+            <a href="{% url 'game:start_page' %}">Play Again</a>
+        </div>
+    </div>
+</body>
+</html>

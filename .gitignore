@@ -173,4 +173,4 @@ static/rest_framework/
 *.tmp
 *.swp
 *.swo
-*~
+*~=5.2.0
