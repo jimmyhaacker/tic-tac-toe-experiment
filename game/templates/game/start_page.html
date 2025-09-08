@@ -227,13 +227,18 @@
             <div class="button-group" role="group" aria-label="Game Options">
                 <button type="submit" aria-describedby="new-game-help">New Game</button>
                 <div id="new-game-help" class="sr-only">Start a new two-player game</div>
-                
-                <button type="button" 
+            </div>
+        </form>
+        
+        <form method="post" action="{% url 'game:new_ai_game' %}" aria-label="AI Game Setup">
+            {% csrf_token %}
+            <input type="hidden" name="player_x_name" id="ai_player_name">
+            <div class="button-group" role="group" aria-label="AI Game Options">
+                <button type="submit" 
                         class="secondary-button" 
-                        disabled 
                         aria-describedby="ai-help"
-                        title="AI mode coming soon">Play vs AI</button>
-                <div id="ai-help" class="sr-only">Single player mode against AI (not yet available)</div>
+                        onclick="document.getElementById('ai_player_name').value = document.getElementById('player_x_name').value || 'Player X'">Play vs AI</button>
+                <div id="ai-help" class="sr-only">Start a single player game against AI</div>
             </div>
         </form>
         

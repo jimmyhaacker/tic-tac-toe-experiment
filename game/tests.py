@@ -574,3 +574,137 @@ class ScoreboardViewTest(TestCase):
         self.assertEqual(scores[0].player_name, "Charlie")
         self.assertEqual(scores[1].player_name, "Alice")
         self.assertEqual(scores[2].player_name, "Bob")
+
+
+class AIGameTest(TestCase):
+    def test_ai_game_creation(self):
+        """Test creating an AI game"""
+        response = self.client.post(reverse('game:new_ai_game'), {
+            'player_x_name': 'Alice'
+        })
+        
+        # Should redirect to game board
+        self.assertEqual(response.status_code, 302)
+        
+        # Check that an AI game was created
+        game = Game.objects.first()
+        self.assertIsNotNone(game)
+        self.assertEqual(game.player_x_name, 'Alice')
+        self.assertEqual(game.player_o_name, 'AI')
+        self.assertTrue(game.is_ai_game)
+        
+    def test_ai_game_creation_empty_name(self):
+        """Test creating an AI game with empty player name"""
+        response = self.client.post(reverse('game:new_ai_game'), {
+            'player_x_name': ''
+        })
+        
+        # Should redirect to game board
+        self.assertEqual(response.status_code, 302)
+        
+        # Check that game was created with default name
+        game = Game.objects.first()
+        self.assertEqual(game.player_x_name, 'Player X')
+        self.assertEqual(game.player_o_name, 'AI')
+        self.assertTrue(game.is_ai_game)
+        
+    def test_ai_make_move_basic(self):
+        """Test AI making a move"""
+        game = Game.objects.create(
+            player_x_name="Alice",
+            player_o_name="AI",
+            is_ai_game=True,
+            current_turn='O'
+        )
+        
+        success, message = game.make_ai_move()
+        self.assertTrue(success)
+        self.assertEqual(message, "Move successful")
+        
+        # Check that a move was made
+        self.assertNotEqual(game.board_state, ' ' * 9)
+        self.assertEqual(game.current_turn, 'X')  # Should switch back to X
+        
+    def test_ai_move_not_ai_game(self):
+        """Test AI move fails for non-AI game"""
+        game = Game.objects.create(
+            player_x_name="Alice",
+            player_o_name="Bob",
+            is_ai_game=False,
+            current_turn='O'
+        )
+        
+        success, message = game.make_ai_move()
+        self.assertFalse(success)
+        self.assertEqual(message, "Not an AI game or game finished")
+        
+    def test_ai_move_wrong_turn(self):
+        """Test AI move fails when it's not AI's turn"""
+        game = Game.objects.create(
+            player_x_name="Alice",
+            player_o_name="AI",
+            is_ai_game=True,
+            current_turn='X'  # Human's turn
+        )
+        
+        success, message = game.make_ai_move()
+        self.assertFalse(success)
+        self.assertEqual(message, "Not AI's turn")
+        
+    def test_ai_blocks_win(self):
+        """Test AI blocks opponent from winning"""
+        game = Game.objects.create(
+            player_x_name="Alice",
+            player_o_name="AI",
+            is_ai_game=True,
+            current_turn='O',
+            board_state='XX       '  # X has two in top row
+        )
+        
+        success, message = game.make_ai_move()
+        self.assertTrue(success)
+        
+        # AI should block by playing in position 2 (index 2)
+        self.assertEqual(game.board_state[2], 'O')
+        
+    def test_ai_takes_win(self):
+        """Test AI takes a win when available"""
+        game = Game.objects.create(
+            player_x_name="Alice",
+            player_o_name="AI",
+            is_ai_game=True,
+            current_turn='O',
+            board_state='OO       '  # O has two in top row, can win at position 2 (index 2)
+        )
+        
+        success, message = game.make_ai_move()
+        self.assertTrue(success)
+        
+        # AI should win by playing in position 2 (index 2) 
+        self.assertEqual(game.board_state[2], 'O')
+        self.assertEqual(game.status, 'O_WON')
+        
+    def test_make_move_triggers_ai_response(self):
+        """Test that making a move in AI game triggers AI response"""
+        game = Game.objects.create(
+            player_x_name="Alice",
+            player_o_name="AI",
+            is_ai_game=True
+        )
+        
+        url = reverse('game:make_move', kwargs={'game_id': game.id})
+        response = self.client.post(
+            url,
+            data=json.dumps({'position': 0, 'player': 'X'}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertTrue(data.get('ai_moved', False))
+        
+        # Check that AI made a move
+        game.refresh_from_db()
+        move_count = game.board_state.count('O')
+        self.assertEqual(move_count, 1)  # AI should have made one move

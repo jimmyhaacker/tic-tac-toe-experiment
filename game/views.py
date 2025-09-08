@@ -35,6 +35,28 @@ def new_game(request):
     return redirect('game:start_page')
 
 
+def new_ai_game(request):
+    """Create a new AI game and redirect to the game board"""
+    if request.method == 'POST':
+        player_x_name = request.POST.get('player_x_name', 'Player X').strip()
+        
+        # Ensure name is not empty
+        if not player_x_name:
+            player_x_name = 'Player X'
+
+        # Create new AI game (player is X, AI is O)
+        game = Game.objects.create(
+            player_x_name=player_x_name,
+            player_o_name="AI",
+            is_ai_game=True
+        )
+
+        return redirect('game:game_board', game_id=game.id)
+
+    # If not POST, redirect to start page
+    return redirect('game:start_page')
+
+
 def game_board(request, game_id):
     """Display the game board for a specific game"""
     game = get_object_or_404(Game, id=game_id)
@@ -71,8 +93,15 @@ def make_move(request, game_id):
         success, message = game.make_move(position, player)
 
         if success:
-            # Return updated game state
-            return JsonResponse({
+            # Trigger AI move if it's an AI game and game is still in progress
+            ai_move_success = None
+            ai_message = None
+            if (game.is_ai_game and game.status == 'IN_PROGRESS' and 
+                game.current_turn == 'O'):
+                ai_move_success, ai_message = game.make_ai_move()
+            
+            # Return updated game state (after potential AI move)
+            response_data = {
                 'success': True,
                 'message': message,
                 'board_state': list(game.board_state),
@@ -81,7 +110,14 @@ def make_move(request, game_id):
                 'status_display': game.get_status_display(),
                 'game_finished': game.status != 'IN_PROGRESS',
                 'winning_pattern': game.get_winning_pattern()
-            })
+            }
+            
+            # Add AI move info if AI moved
+            if game.is_ai_game and ai_move_success:
+                response_data['ai_moved'] = True
+                response_data['ai_message'] = ai_message
+            
+            return JsonResponse(response_data)
         else:
             return JsonResponse({
                 'success': False,
