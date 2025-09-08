@@ -44,6 +44,7 @@ class Game(models.Model):
     board_state = models.CharField(max_length=9, default=' ' * 9)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES,
                               default='IN_PROGRESS')
+    is_ai_game = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -166,6 +167,75 @@ class Game(models.Model):
         # Save the updated scores
         x_score.save()
         o_score.save()
+
+    def make_ai_move(self):
+        """
+        Make an AI move. Returns tuple (success: bool, message: str)
+        Simple AI strategy: try to win, block opponent win, then random
+        """
+        import random
+        
+        if not self.is_ai_game or self.status != 'IN_PROGRESS':
+            return False, "Not an AI game or game finished"
+            
+        if self.current_turn != 'O':
+            return False, "Not AI's turn"
+            
+        # Get available positions
+        available_positions = [i for i, cell in enumerate(self.board_state) 
+                             if cell == ' ']
+        
+        if not available_positions:
+            return False, "No available positions"
+            
+        # Strategy 1: Try to win
+        for pos in available_positions:
+            # Simulate move
+            temp_board = list(self.board_state)
+            temp_board[pos] = 'O'
+            temp_board_str = ''.join(temp_board)
+            
+            # Check if this move wins
+            if self._check_winner_for_board(temp_board_str):
+                return self.make_move(pos, 'O')
+                
+        # Strategy 2: Block opponent from winning
+        for pos in available_positions:
+            # Simulate opponent move
+            temp_board = list(self.board_state)
+            temp_board[pos] = 'X'
+            temp_board_str = ''.join(temp_board)
+            
+            # Check if opponent would win
+            if self._check_winner_for_board(temp_board_str):
+                return self.make_move(pos, 'O')
+                
+        # Strategy 3: Take center if available
+        if 4 in available_positions:
+            return self.make_move(4, 'O')
+            
+        # Strategy 4: Take corners
+        corners = [0, 2, 6, 8]
+        available_corners = [pos for pos in corners if pos in available_positions]
+        if available_corners:
+            return self.make_move(random.choice(available_corners), 'O')
+            
+        # Strategy 5: Random move
+        return self.make_move(random.choice(available_positions), 'O')
+    
+    def _check_winner_for_board(self, board_state):
+        """Helper method to check winner for a given board state"""
+        win_patterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],  # Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],  # Columns
+            [0, 4, 8], [2, 4, 6]              # Diagonals
+        ]
+
+        for pattern in win_patterns:
+            if (board_state[pattern[0]] == board_state[pattern[1]] == board_state[pattern[2]] and
+                    board_state[pattern[0]] != ' '):
+                return True
+        return False
 
 
 class Move(models.Model):
