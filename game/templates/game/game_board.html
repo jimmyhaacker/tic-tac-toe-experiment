@@ -5,134 +5,476 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tic-Tac-Toe Game - {{ game.player_x_name }} vs {{ game.player_o_name }}</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             max-width: 600px;
             margin: 20px auto;
             padding: 20px;
             text-align: center;
             background-color: #f5f5f5;
+            line-height: 1.6;
         }
+        
         .container {
             background: white;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+        
         h1 {
             color: #333;
             margin-bottom: 20px;
+            font-size: 1.75rem;
         }
+        
         .game-info {
             margin-bottom: 30px;
-            font-size: 18px;
+            font-size: 1.1rem;
             color: #555;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
         }
+        
+        .game-info p {
+            margin: 5px 0;
+            padding: 8px 16px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        
         .board {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            max-width: 300px;
+            gap: 8px;
+            max-width: 320px;
             margin: 20px auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            border: 2px solid #ddd;
         }
+        
         .cell {
-            width: 80px;
-            height: 80px;
-            border: 2px solid #333;
+            aspect-ratio: 1;
+            min-height: 80px;
+            border: 3px solid #333;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 2rem;
             font-weight: bold;
             cursor: pointer;
             background-color: white;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            position: relative;
         }
-        .cell:hover {
+        
+        .cell:hover:not(.disabled) {
             background-color: #f0f0f0;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+        
+        .cell:focus {
+            outline: 3px solid #4CAF50;
+            outline-offset: 2px;
+        }
+        
         .cell.disabled {
             cursor: not-allowed;
             background-color: #f9f9f9;
+            opacity: 0.8;
         }
+        
         .cell.winning-cell {
             background-color: #90EE90 !important;
             border-color: #32CD32 !important;
-            box-shadow: 0 0 10px rgba(50, 205, 50, 0.5);
+            box-shadow: 0 0 15px rgba(50, 205, 50, 0.6);
+            animation: pulse 1s ease-in-out;
         }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
         .actions {
             margin-top: 30px;
         }
-        button {
+        
+        button, .button-link {
             background-color: #4CAF50;
             color: white;
-            padding: 12px 24px;
+            padding: 14px 24px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            margin: 5px;
+            margin: 8px;
             text-decoration: none;
             display: inline-block;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            min-height: 44px;
+            min-width: 120px;
         }
-        button:hover, a:hover {
+        
+        button:hover, .button-link:hover {
             background-color: #45a049;
+            transform: translateY(-1px);
         }
-        a {
+        
+        button:focus, .button-link:focus {
+            outline: 3px solid rgba(76, 175, 80, 0.3);
+            outline-offset: 2px;
+        }
+        
+        .button-link {
             background-color: #008CBA;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 5px;
-            text-decoration: none;
-            display: inline-block;
-            transition: background-color 0.3s;
         }
-        a:hover {
+        
+        .button-link:hover {
             background-color: #007bb5;
+        }
+        
+        /* Status notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: #4CAF50;
+        }
+        
+        .notification.error {
+            background-color: #f44336;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            body {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 15px;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+                font-size: 1rem;
+            }
+            
+            .board {
+                max-width: 280px;
+                gap: 6px;
+                padding: 15px;
+            }
+            
+            .cell {
+                min-height: 70px;
+                font-size: 1.75rem;
+                border-width: 2px;
+            }
+            
+            button, .button-link {
+                width: 100%;
+                margin: 8px 0;
+                padding: 16px 24px;
+                font-size: 18px;
+            }
+            
+            .notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                transform: translateY(-100px);
+            }
+            
+            .notification.show {
+                transform: translateY(0);
+            }
+        }
+        
+        /* Tablet adjustments */
+        @media (min-width: 481px) and (max-width: 768px) {
+            body {
+                max-width: 500px;
+                margin: 30px auto;
+            }
+            
+            .container {
+                padding: 35px;
+            }
+            
+            .board {
+                max-width: 300px;
+            }
+        }
+        
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .cell {
+                border-width: 4px;
+            }
+            
+            button, .button-link {
+                border: 2px solid currentColor;
+            }
+        }
+        
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .cell, button, .button-link, .notification {
+                transition: none;
+            }
+            
+            .cell:hover:not(.disabled) {
+                transform: none;
+            }
+            
+            button:hover, .button-link:hover {
+                transform: none;
+            }
+            
+            .cell.winning-cell {
+                animation: none;
+            }
+        }
+        
+        /* Screen reader only styles */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        /* Skip link for keyboard navigation */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: #000;
+            color: #fff;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 1001;
+        }
+        
+        .skip-link:focus {
+            top: 6px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <a href="#game-board" class="skip-link">Skip to game board</a>
+    
+    <main class="container" role="main">
         <h1>{{ game.player_x_name }} (X) vs {{ game.player_o_name }} (O)</h1>
         
-        <div class="game-info">
-            <p>Current Turn: <strong>{{ game.current_turn }}</strong></p>
-            <p>Status: <strong>{{ game.get_status_display }}</strong></p>
-        </div>
+        <section class="game-info" aria-live="polite" aria-label="Game Status">
+            <p aria-label="Current player turn">
+                Current Turn: <strong id="current-turn">{{ game.current_turn }}</strong>
+            </p>
+            <p aria-label="Game status">
+                Status: <strong id="game-status">{{ game.get_status_display }}</strong>
+            </p>
+        </section>
         
-        <div class="board">
+        <section id="game-board" 
+                 class="board" 
+                 role="grid" 
+                 aria-label="Tic-tac-toe game board"
+                 aria-describedby="board-instructions">
+            <div id="board-instructions" class="sr-only">
+                Use arrow keys to navigate and Enter or Space to make a move. 
+                Game board has 3 rows and 3 columns.
+            </div>
+            
             {% for cell in board_cells %}
                 <div class="cell {% if cell != ' ' or game.status != 'IN_PROGRESS' %}disabled{% endif %}" 
                      data-position="{{ forloop.counter0 }}"
-                     onclick="makeMove({{ forloop.counter0 }})">
+                     role="gridcell"
+                     tabindex="{% if cell == ' ' and game.status == 'IN_PROGRESS' %}0{% else %}-1{% endif %}"
+                     aria-label="Cell {{ forloop.counter0|add:1 }}{% if cell != ' ' %}, occupied by {{ cell }}{% else %}, empty{% endif %}"
+                     aria-describedby="cell-{{ forloop.counter0 }}-help"
+                     onclick="makeMove({{ forloop.counter0 }})"
+                     onkeydown="handleKeyDown(event, {{ forloop.counter0 }})">
                     {{ cell|default_if_none:'' }}
+                    <div id="cell-{{ forloop.counter0 }}-help" class="sr-only">
+                        {% if cell == ' ' and game.status == 'IN_PROGRESS' %}
+                            Press Enter or Space to place {{ game.current_turn }}
+                        {% elif cell != ' ' %}
+                            Cell occupied by {{ cell }}
+                        {% else %}
+                            Game finished
+                        {% endif %}
+                    </div>
                 </div>
             {% endfor %}
-        </div>
+        </section>
         
-        <div class="actions">
-            <a href="{% url 'game:start_page' %}">Play Again</a>
-        </div>
-    </div>
+        <section class="actions" aria-label="Game Actions">
+            <a href="{% url 'game:start_page' %}" class="button-link" role="button">Play Again</a>
+        </section>
+        
+        <!-- Live region for game announcements -->
+        <div id="game-announcements" aria-live="assertive" aria-atomic="true" class="sr-only"></div>
+    </main>
 
     <script>
+        // Keyboard navigation state
+        let currentFocusIndex = 0;
+        const cells = document.querySelectorAll('.cell:not(.disabled)');
+        
+        // Initialize focus on first available cell
+        document.addEventListener('DOMContentLoaded', function() {
+            updateFocusableElements();
+            if (cells.length > 0) {
+                cells[0].focus();
+            }
+        });
+        
+        function updateFocusableElements() {
+            // Reset tabindex for all cells
+            document.querySelectorAll('.cell').forEach(cell => {
+                if (cell.classList.contains('disabled')) {
+                    cell.tabIndex = -1;
+                } else {
+                    cell.tabIndex = 0;
+                }
+            });
+        }
+        
+        function handleKeyDown(event, position) {
+            const allCells = document.querySelectorAll('.cell');
+            const currentIndex = Array.from(allCells).findIndex(cell => 
+                parseInt(cell.dataset.position) === position
+            );
+            
+            switch(event.key) {
+                case 'Enter':
+                case ' ':
+                    event.preventDefault();
+                    makeMove(position);
+                    break;
+                case 'ArrowUp':
+                    event.preventDefault();
+                    focusCell(currentIndex - 3);
+                    break;
+                case 'ArrowDown':
+                    event.preventDefault();
+                    focusCell(currentIndex + 3);
+                    break;
+                case 'ArrowLeft':
+                    event.preventDefault();
+                    focusCell(currentIndex - 1);
+                    break;
+                case 'ArrowRight':
+                    event.preventDefault();
+                    focusCell(currentIndex + 1);
+                    break;
+                case 'Home':
+                    event.preventDefault();
+                    focusCell(0);
+                    break;
+                case 'End':
+                    event.preventDefault();
+                    focusCell(8);
+                    break;
+            }
+        }
+        
+        function focusCell(index) {
+            const allCells = document.querySelectorAll('.cell');
+            if (index >= 0 && index < allCells.length) {
+                allCells[index].focus();
+            }
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Remove existing notification
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.setAttribute('role', 'alert');
+            notification.setAttribute('aria-live', 'assertive');
+            
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Hide notification after 4 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+        
+        function announceToScreenReader(message) {
+            const announcements = document.getElementById('game-announcements');
+            announcements.textContent = message;
+            
+            // Clear after announcement
+            setTimeout(() => {
+                announcements.textContent = '';
+            }, 1000);
+        }
+        
         function makeMove(position) {
             // Get current game data from the page (dynamically)
             const gameId = {{ game.id }};
-            const currentTurnElement = document.querySelector('.game-info p:first-child strong');
+            const currentTurnElement = document.querySelector('#current-turn');
             const currentTurn = currentTurnElement.textContent.trim();
-            const statusElement = document.querySelector('.game-info p:last-child strong');
+            const statusElement = document.querySelector('#game-status');
             const gameStatus = statusElement.textContent.trim();
             
             // Check if game is finished
             if (gameStatus !== 'In Progress') {
-                alert('Game is finished!');
+                showNotification('Game is finished!', 'error');
+                announceToScreenReader('Game is finished!');
                 return;
             }
             
@@ -141,12 +483,18 @@
             
             // Check if cell is already occupied
             if (cell.classList.contains('disabled')) {
+                showNotification('Cell is already occupied!', 'error');
+                announceToScreenReader('Cell is already occupied!');
                 return;
             }
             
             // Disable the cell immediately to prevent double-clicks
             cell.classList.add('disabled');
+            cell.tabIndex = -1;
             cell.style.cursor = 'not-allowed';
+            
+            // Show loading state
+            showNotification('Making move...', 'info');
             
             // Make AJAX request to submit move
             fetch(`/game/${gameId}/move/`, {
@@ -178,25 +526,41 @@
                         setTimeout(() => {
                             if (data.status.endsWith('_WON')) {
                                 const winner = data.status === 'X_WON' ? 'X' : 'O';
-                                alert(`Player ${winner} wins!`);
+                                const message = `Player ${winner} wins!`;
+                                showNotification(message, 'success');
+                                announceToScreenReader(message);
                             } else if (data.status === 'DRAW') {
-                                alert('Game ended in a draw!');
+                                const message = 'Game ended in a draw!';
+                                showNotification(message, 'info');
+                                announceToScreenReader(message);
                             }
                         }, 100);
+                    } else {
+                        // Announce turn change
+                        announceToScreenReader(`It's ${data.current_turn}'s turn`);
                     }
+                    
+                    // Update focusable elements
+                    updateFocusableElements();
+                    
                 } else {
                     // Re-enable the cell on error
                     cell.classList.remove('disabled');
+                    cell.tabIndex = 0;
                     cell.style.cursor = 'pointer';
-                    alert(data.message);
+                    showNotification(data.message, 'error');
+                    announceToScreenReader(data.message);
                 }
             })
             .catch(error => {
                 // Re-enable the cell on error
                 cell.classList.remove('disabled');
+                cell.tabIndex = 0;
                 cell.style.cursor = 'pointer';
                 console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+                const message = 'An error occurred. Please try again.';
+                showNotification(message, 'error');
+                announceToScreenReader(message);
             });
         }
         
@@ -206,29 +570,35 @@
                 const cell = cells[index];
                 cell.textContent = cellValue === ' ' ? '' : cellValue;
                 
-                // Disable occupied cells
+                // Update accessibility attributes
+                const cellNumber = index + 1;
                 if (cellValue !== ' ') {
                     cell.classList.add('disabled');
+                    cell.tabIndex = -1;
                     cell.style.cursor = 'not-allowed';
+                    cell.setAttribute('aria-label', `Cell ${cellNumber}, occupied by ${cellValue}`);
                 } else {
                     cell.classList.remove('disabled');
+                    cell.tabIndex = 0;
                     cell.style.cursor = 'pointer';
+                    cell.setAttribute('aria-label', `Cell ${cellNumber}, empty`);
                 }
             });
         }
         
         function updateGameInfo(currentTurn, statusDisplay, gameFinished) {
             // Update current turn display
-            document.querySelector('.game-info p:first-child strong').textContent = currentTurn;
+            document.querySelector('#current-turn').textContent = currentTurn;
             
             // Update status display
-            document.querySelector('.game-info p:last-child strong').textContent = statusDisplay;
+            document.querySelector('#game-status').textContent = statusDisplay;
             
             // Disable all cells if game is finished
             if (gameFinished) {
                 const cells = document.querySelectorAll('.cell');
                 cells.forEach(cell => {
                     cell.classList.add('disabled');
+                    cell.tabIndex = -1;
                     cell.style.cursor = 'not-allowed';
                 });
             }
