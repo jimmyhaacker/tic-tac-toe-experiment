@@ -103,7 +103,9 @@
         
         <div class="board">
             {% for cell in board_cells %}
-                <div class="cell {% if cell != ' ' %}disabled{% endif %}" data-position="{{ forloop.counter0 }}">
+                <div class="cell {% if cell != ' ' or game.status != 'IN_PROGRESS' %}disabled{% endif %}" 
+                     data-position="{{ forloop.counter0 }}"
+                     onclick="makeMove({{ forloop.counter0 }})">
                     {{ cell|default_if_none:'' }}
                 </div>
             {% endfor %}
@@ -113,5 +115,114 @@
             <a href="{% url 'game:start_page' %}">Play Again</a>
         </div>
     </div>
+
+    <script>
+        function makeMove(position) {
+            // Get current game data from the page (dynamically)
+            const gameId = {{ game.id }};
+            const currentTurnElement = document.querySelector('.game-info p:first-child strong');
+            const currentTurn = currentTurnElement.textContent.trim();
+            const statusElement = document.querySelector('.game-info p:last-child strong');
+            const gameStatus = statusElement.textContent.trim();
+            
+            // Check if game is finished
+            if (gameStatus !== 'In Progress') {
+                alert('Game is finished!');
+                return;
+            }
+            
+            // Get the clicked cell
+            const cell = document.querySelector(`[data-position="${position}"]`);
+            
+            // Check if cell is already occupied
+            if (cell.classList.contains('disabled')) {
+                return;
+            }
+            
+            // Disable the cell immediately to prevent double-clicks
+            cell.classList.add('disabled');
+            cell.style.cursor = 'not-allowed';
+            
+            // Make AJAX request to submit move
+            fetch(`/game/${gameId}/move/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    position: position,
+                    player: currentTurn
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the board display
+                    updateBoard(data.board_state);
+                    
+                    // Update game info
+                    updateGameInfo(data.current_turn, data.status_display, data.game_finished);
+                    
+                    // Show game end message if finished
+                    if (data.game_finished) {
+                        setTimeout(() => {
+                            if (data.status.endsWith('_WON')) {
+                                const winner = data.status === 'X_WON' ? 'X' : 'O';
+                                alert(`Player ${winner} wins!`);
+                            } else if (data.status === 'DRAW') {
+                                alert('Game ended in a draw!');
+                            }
+                        }, 100);
+                    }
+                } else {
+                    // Re-enable the cell on error
+                    cell.classList.remove('disabled');
+                    cell.style.cursor = 'pointer';
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                // Re-enable the cell on error
+                cell.classList.remove('disabled');
+                cell.style.cursor = 'pointer';
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        }
+        
+        function updateBoard(boardState) {
+            const cells = document.querySelectorAll('.cell');
+            boardState.forEach((cellValue, index) => {
+                const cell = cells[index];
+                cell.textContent = cellValue === ' ' ? '' : cellValue;
+                
+                // Disable occupied cells
+                if (cellValue !== ' ') {
+                    cell.classList.add('disabled');
+                    cell.style.cursor = 'not-allowed';
+                } else {
+                    cell.classList.remove('disabled');
+                    cell.style.cursor = 'pointer';
+                }
+            });
+        }
+        
+        function updateGameInfo(currentTurn, statusDisplay, gameFinished) {
+            // Update current turn display
+            document.querySelector('.game-info p:first-child strong').textContent = currentTurn;
+            
+            // Update status display
+            document.querySelector('.game-info p:last-child strong').textContent = statusDisplay;
+            
+            // Disable all cells if game is finished
+            if (gameFinished) {
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.classList.add('disabled');
+                    cell.style.cursor = 'not-allowed';
+                });
+            }
+        }
+    </script>
 </body>
 </html>
