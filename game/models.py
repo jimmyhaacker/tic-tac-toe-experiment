@@ -85,6 +85,26 @@ class Game(models.Model):
                 return True
         return False
 
+    def get_winning_pattern(self):
+        """Get the winning pattern positions if there's a winner"""
+        if self.status not in ['X_WON', 'O_WON']:
+            return None
+
+        board = self.board_state
+
+        # Winning combinations
+        win_patterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],  # Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],  # Columns
+            [0, 4, 8], [2, 4, 6]              # Diagonals
+        ]
+
+        for pattern in win_patterns:
+            if (board[pattern[0]] == board[pattern[1]] == board[pattern[2]] and
+                    board[pattern[0]] != ' '):
+                return pattern
+        return None
+
     def _check_draw(self):
         """Check if the game is a draw (board full with no winner)"""
         return ' ' not in self.board_state
